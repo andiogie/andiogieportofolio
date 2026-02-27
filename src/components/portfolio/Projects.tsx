@@ -21,18 +21,17 @@ interface ProjectsProps {
 
 export function Projects({ initialData }: ProjectsProps) {
   const [projects, setProjects] = useState(initialData || PROFILE_DATA.projects);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
 
   useEffect(() => {
     if (initialData) setProjects(initialData);
   }, [initialData]);
 
-  const sideProjects = projects.filter(p => (p as any).category === 'Side Project' || !(p as any).category);
+  const sideProjects = projects.filter(p => (p as any).category === 'Personal Project' || (p as any).category === 'Side Project' || !(p as any).category);
   const officialProjects = projects.filter(p => (p as any).category === 'Official Project');
 
   const PersonalProjectGrid = ({ items }: any) => (
     <div className="mb-20">
-      <div className="flex items-center gap-3 mb-10">
+      <div className="flex items-center gap-3 mb-10 text-left">
         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
           <Sparkles className="w-6 h-6 text-primary" />
         </div>
@@ -47,7 +46,7 @@ export function Projects({ initialData }: ProjectsProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: idx * 0.1 }}
-            className="group glass-card rounded-3xl overflow-hidden flex flex-col h-full"
+            className="group glass-card rounded-3xl overflow-hidden flex flex-col h-full text-left"
           >
             <div className="relative h-48 w-full overflow-hidden">
               <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/0 transition-colors z-10" />
@@ -105,7 +104,7 @@ export function Projects({ initialData }: ProjectsProps) {
 
   const ProfessionalProjectList = ({ items }: any) => (
     <div className="mb-20">
-      <div className="flex items-center gap-3 mb-10">
+      <div className="flex items-center gap-3 mb-10 text-left">
         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
           <Building2 className="w-6 h-6 text-primary" />
         </div>
@@ -120,13 +119,13 @@ export function Projects({ initialData }: ProjectsProps) {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: idx * 0.05 }}
-            className="group glass-card p-4 md:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-primary/40 transition-all"
+            className="group glass-card p-4 md:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-primary/40 transition-all text-left"
           >
             <div className="flex items-center gap-5">
               <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
                 <Code2 className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
-              <div>
+              <div className="text-left">
                 <h5 className="font-headline font-bold text-lg">{project.title}</h5>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                   <span className="text-xs text-primary font-medium">{project.type}</span>
@@ -163,7 +162,7 @@ export function Projects({ initialData }: ProjectsProps) {
                       <span className="text-[10px] uppercase tracking-widest text-primary font-bold mb-2">{project.type}</span>
                       <DialogTitle className="text-3xl font-headline font-bold">{project.title}</DialogTitle>
                     </DialogHeader>
-                    <div className="mt-6 space-y-6">
+                    <div className="mt-6 space-y-6 text-left">
                       <p className="text-muted-foreground leading-relaxed text-sm">
                         {project.desc}
                       </p>
@@ -219,8 +218,8 @@ export function Projects({ initialData }: ProjectsProps) {
 
   return (
     <section id="portfolio" className="py-24">
-      <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
-        <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16 text-left">
+        <div className="text-left">
           <h2 className="text-primary font-headline font-semibold tracking-wider uppercase mb-2">My Work</h2>
           <h3 className="text-4xl lg:text-5xl font-headline font-bold">Project Portfolio</h3>
         </div>
