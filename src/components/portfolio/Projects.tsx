@@ -182,9 +182,11 @@ export function Projects({ initialData }: ProjectsProps) {
                 <h5 className="font-headline font-bold text-lg">{project.title}</h5>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                   <span className="text-xs text-primary font-medium">{project.type}</span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Database className="w-3 h-3" /> {project.techDb || 'Internal Systems'}
-                  </span>
+                  {project.techDb && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Database className="w-3 h-3" /> {project.techDb}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
