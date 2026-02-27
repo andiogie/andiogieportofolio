@@ -43,26 +43,21 @@ import { Label } from '@/components/ui/label';
 import { PROFILE_DATA } from '@/lib/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-
-const STORAGE_KEY = 'andi_ogie_portfolio_v1';
-
-const TABS = [
-  { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
-  { id: 'profile', icon: User, label: 'Profile' },
-  { id: 'skills', icon: Wrench, label: 'Skills' },
-  { id: 'education', icon: GraduationCap, label: 'Education' },
-  { id: 'experience', icon: Briefcase, label: 'Experience' },
-  { id: 'projects', icon: Code, label: 'Projects' },
-  { id: 'certifications', icon: Award, label: 'Certifications' }
-];
+import { useFirestore, useDoc } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AdminDashboard() {
   const { toast } = useToast();
+  const db = useFirestore();
+  const profileDocRef = db ? doc(db, 'profiles', 'main') : null;
+  const { data: cloudProfile, loading: isLoadingData } = useDoc(profileDocRef);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [aiLoading, setAiLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const [isExpModalOpen, setIsExpModalOpen] = useState(false);
@@ -79,44 +74,42 @@ export default function AdminDashboard() {
   const [profile, setProfile] = useState(PROFILE_DATA);
 
   useEffect(() => {
-    const loadData = () => {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const merged = { ...PROFILE_DATA, ...parsed };
-          setProfile(merged);
-        } catch (e) {
-          setProfile(PROFILE_DATA);
-        }
-      } else {
-        setProfile(PROFILE_DATA);
-      }
-      setIsLoadingData(false);
-    };
-    loadData();
-  }, []);
+    if (cloudProfile) {
+      setProfile({ ...PROFILE_DATA, ...cloudProfile });
+    }
+  }, [cloudProfile]);
 
   const persistData = (updatedProfile: any) => {
+    if (!db || !profileDocRef) return;
+    
     setIsSaving(true);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProfile));
-    setTimeout(() => {
-      setIsSaving(false);
-      toast({
-        title: "Changes Saved",
-        description: "Your portfolio content has been updated locally.",
+    setDoc(profileDocRef, updatedProfile, { merge: true })
+      .then(() => {
+        setIsSaving(false);
+        toast({
+          title: "Changes Saved to Cloud",
+          description: "Your portfolio content has been updated globally.",
+        });
+      })
+      .catch(async (serverError) => {
+        setIsSaving(false);
+        const permissionError = new FirestorePermissionError({
+          path: profileDocRef.path,
+          operation: 'update',
+          requestResourceData: updatedProfile,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
-    }, 500);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 800 * 1024) { // Firestore limit is 1MB total, keeping Base64 small
         toast({
           variant: "destructive",
           title: "File too large",
-          description: "Please upload an image smaller than 2MB for local storage performance.",
+          description: "Please upload an image smaller than 800KB for cloud storage.",
         });
         return;
       }
@@ -127,7 +120,7 @@ export default function AdminDashboard() {
         setProfile({ ...profile, photoUrl: base64String });
         toast({
           title: "Photo Prepared",
-          description: "Click 'Save Profile Changes' to make it permanent.",
+          description: "Click 'Save Changes' to upload it to the cloud.",
         });
       };
       reader.readAsDataURL(file);
@@ -225,7 +218,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d0a0d] text-white">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="font-headline font-bold text-xl">Loading Dashboard...</p>
+        <p className="font-headline font-bold text-xl">Loading Cloud Data...</p>
       </div>
     );
   }
@@ -238,7 +231,7 @@ export default function AdminDashboard() {
         </div>
         <div>
           <h2 className="font-headline font-bold text-sm truncate max-w-[120px]">{profile.name}</h2>
-          <p className="text-[10px] uppercase text-primary font-bold">Admin Console</p>
+          <p className="text-[10px] uppercase text-primary font-bold">Cloud Dashboard</p>
         </div>
       </div>
 
@@ -270,7 +263,7 @@ export default function AdminDashboard() {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-xs font-bold">
             {profile.name?.charAt(0)}
           </div>
-          <span className="font-headline font-bold text-sm tracking-tight">Admin Panel</span>
+          <span className="font-headline font-bold text-sm tracking-tight">Cloud Console</span>
         </div>
         
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -297,7 +290,7 @@ export default function AdminDashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
           <div>
             <h1 className="text-2xl sm:text-3xl font-headline font-bold uppercase tracking-tight">{activeTab}</h1>
-            <p className="text-sm text-muted-foreground">Manage your portfolio data locally</p>
+            <p className="text-sm text-muted-foreground">Manage your portfolio data in the cloud</p>
           </div>
           <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
             <Button variant="outline" className="gap-2 glass flex-1 md:flex-none" onClick={() => window.open('/', '_blank')}><Monitor className="w-4 h-4" /> View Site</Button>
@@ -352,9 +345,6 @@ export default function AdminDashboard() {
                         accept="image/*" 
                         className="hidden" 
                       />
-                      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-primary px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-xl">
-                        Profile Image
-                      </div>
                     </div>
 
                     <div className="flex-1 w-full space-y-6">
@@ -395,7 +385,7 @@ export default function AdminDashboard() {
               <div className="flex justify-end sticky bottom-6 z-10">
                 <Button type="submit" disabled={isSaving} className="bg-primary px-10 shadow-2xl h-16 rounded-full text-white font-bold text-lg hover:scale-105 transition-all">
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-6 h-6 mr-2" />}
-                  Save Profile Changes
+                  Save All Changes
                 </Button>
               </div>
             </form>
@@ -449,7 +439,7 @@ export default function AdminDashboard() {
               <div className="flex justify-end sticky bottom-6 z-10">
                 <Button onClick={() => persistData(profile)} disabled={isSaving} className="bg-primary px-8 shadow-2xl h-14 rounded-full text-white">
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-                  Save Skills Changes
+                  Save Skills to Cloud
                 </Button>
               </div>
             </div>
@@ -586,3 +576,13 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+const TABS = [
+  { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
+  { id: 'profile', icon: User, label: 'Profile' },
+  { id: 'skills', icon: Wrench, label: 'Skills' },
+  { id: 'education', icon: GraduationCap, label: 'Education' },
+  { id: 'experience', icon: Briefcase, label: 'Experience' },
+  { id: 'projects', icon: Code, label: 'Projects' },
+  { id: 'certifications', icon: Award, label: 'Certifications' }
+];

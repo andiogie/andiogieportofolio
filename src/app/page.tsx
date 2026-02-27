@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Hero } from '@/components/portfolio/Hero';
 import { Skills } from '@/components/portfolio/Skills';
 import { Education } from '@/components/portfolio/Education';
@@ -12,31 +12,24 @@ import { Contact } from '@/components/portfolio/Contact';
 import { Navigation } from '@/components/portfolio/Navigation';
 import { ResumeTemplate } from '@/components/portfolio/ResumeTemplate';
 import { PROFILE_DATA } from '@/lib/constants';
-
-const STORAGE_KEY = 'andi_ogie_portfolio_v1';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 export default function PortfolioPage() {
-  const [profile, setProfile] = useState(PROFILE_DATA);
+  const db = useFirestore();
+  const profileDocRef = db ? doc(db, 'profiles', 'main') : null;
+  const { data: cloudProfile, loading } = useDoc(profileDocRef);
 
-  useEffect(() => {
-    const loadData = () => {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setProfile({ ...PROFILE_DATA, ...parsed });
-        } catch (e) {
-          console.error("Local data corrupted, using constants");
-          setProfile(PROFILE_DATA);
-        }
-      }
-    };
-    loadData();
+  // Merge cloud data with static constants as fallback
+  const profile = cloudProfile ? { ...PROFILE_DATA, ...cloudProfile } : PROFILE_DATA;
 
-    // Listen for changes if user edits in another tab
-    window.addEventListener('storage', loadData);
-    return () => window.removeEventListener('storage', loadData);
-  }, []);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-x-hidden">

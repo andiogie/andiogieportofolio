@@ -14,8 +14,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Check if we have a valid config
-const isConfigValid = firebaseConfig.apiKey && firebaseConfig.projectId;
+const isConfigValid = firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.includes('REPLACE');
 
 const app = getApps().length > 0 
   ? getApp() 
