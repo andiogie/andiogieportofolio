@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -23,7 +22,7 @@ import {
   Phone,
   Mail,
   MapPin,
-  Image as ImageIcon,
+  ImageIcon,
   Wrench,
   Settings,
   ExternalLink,
@@ -43,10 +42,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { PROFILE_DATA } from '@/lib/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useFirestore, useDoc, isConfigValid } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -64,10 +63,6 @@ export default function AdminDashboard() {
   const [currentExp, setCurrentExp] = useState<any>(null);
   const [isProjModalOpen, setIsProjModalOpen] = useState(false);
   const [currentProj, setCurrentProj] = useState<any>(null);
-  const [isEduModalOpen, setIsEduModalOpen] = useState(false);
-  const [currentEdu, setCurrentEdu] = useState<any>(null);
-  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
-  const [currentCert, setCurrentCert] = useState<any>(null);
   const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
   const [currentSkillCat, setCurrentSkillCat] = useState<any>(null);
 
@@ -79,12 +74,12 @@ export default function AdminDashboard() {
     }
   }, [cloudProfile]);
 
-  const persistData = (updatedProfile: any) => {
+  const persistData = async (updatedProfile: any) => {
     if (!isConfigValid) {
       toast({
         variant: "destructive",
-        title: "Firebase Not Configured",
-        description: "Please set your NEXT_PUBLIC_FIREBASE_* Environment Variables in Vercel.",
+        title: "Firebase Configuration Missing",
+        description: "Please check your environment variables in Vercel.",
       });
       return;
     }
@@ -92,23 +87,22 @@ export default function AdminDashboard() {
     if (!db || !profileDocRef) return;
     
     setIsSaving(true);
-    setDoc(profileDocRef, updatedProfile, { merge: true })
-      .then(() => {
-        setIsSaving(false);
-        toast({
-          title: "Changes Saved to Cloud",
-          description: "Your portfolio content has been updated globally.",
-        });
-      })
-      .catch((error) => {
-        setIsSaving(false);
-        console.error("Save Error:", error);
-        toast({
-          variant: "destructive",
-          title: "Save Failed",
-          description: error.message || "Make sure Firestore Rules allow read/write.",
-        });
+    try {
+      await setDoc(profileDocRef, updatedProfile, { merge: true });
+      setIsSaving(false);
+      toast({
+        title: "Success!",
+        description: "Portfolio updated successfully.",
       });
+    } catch (error: any) {
+      setIsSaving(false);
+      console.error("Save Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: error.message,
+      });
+    }
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,8 +111,8 @@ export default function AdminDashboard() {
       if (file.size > 800 * 1024) {
         toast({
           variant: "destructive",
-          title: "File too large",
-          description: "Please upload an image smaller than 800KB.",
+          title: "File Too Large",
+          description: "Max size is 800KB.",
         });
         return;
       }
@@ -126,31 +120,11 @@ export default function AdminDashboard() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        setProfile({ ...profile, photoUrl: base64String });
+        const updatedProfile = { ...profile, photoUrl: base64String };
+        setProfile(updatedProfile);
+        persistData(updatedProfile);
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAiRefinement = async (type: 'work-experience' | 'portfolio-project') => {
-    setAiLoading(true);
-    try {
-      const result = await aiAssistedDescriptionGeneration({
-        contextType: type,
-        contextDetails: {
-          companyName: type === 'work-experience' ? currentExp?.company : undefined,
-          position: type === 'work-experience' ? currentExp?.role : undefined,
-          projectName: type === 'portfolio-project' ? currentProj?.title : undefined,
-          technologiesUsed: type === 'portfolio-project' ? `${currentProj?.techFront}, ${currentProj?.techBack}` : undefined,
-        },
-        originalDescription: type === 'work-experience' ? currentExp?.desc : currentProj?.desc
-      });
-      if (type === 'work-experience') setCurrentExp({ ...currentExp, desc: result.generatedDescription });
-      else setCurrentProj({ ...currentProj, desc: result.generatedDescription });
-    } catch (error) {
-      toast({ variant: "destructive", title: "AI Error", description: "Failed to refine description." });
-    } finally {
-      setAiLoading(false);
     }
   };
 
@@ -168,7 +142,7 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteItem = (collectionName: string, id: string) => {
-    if (!confirm("Are you sure?")) return;
+    if (!confirm("Delete this item?")) return;
     const collection = (profile[collectionName as keyof typeof profile] as any[] || []).filter((i: any) => i.id !== id);
     const updatedProfile = { ...profile, [collectionName]: collection };
     setProfile(updatedProfile);
@@ -179,19 +153,19 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d0a0d] text-white">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="font-headline font-bold text-xl">Loading Cloud Data...</p>
+        <p className="font-headline font-bold text-xl">Connecting to Cloud...</p>
       </div>
     );
   }
 
   const NavContent = () => (
     <div className="flex flex-col h-full space-y-6">
-      <div className="flex items-center gap-3 px-4 mb-2 lg:mb-4">
+      <div className="flex items-center gap-3 px-4 mb-2">
         <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center font-bold overflow-hidden border border-white/10 shrink-0">
           {profile.photoUrl ? <img src={profile.photoUrl} alt="avatar" className="w-full h-full object-cover" /> : <User className="w-5 h-5" />}
         </div>
-        <div>
-          <h2 className="font-headline font-bold text-sm truncate max-w-[120px]">{profile.name}</h2>
+        <div className="min-w-0">
+          <h2 className="font-headline font-bold text-sm truncate">{profile.name}</h2>
           <p className="text-[10px] uppercase text-primary font-bold">Cloud Dashboard</p>
         </div>
       </div>
@@ -212,16 +186,40 @@ export default function AdminDashboard() {
       </nav>
 
       <button onClick={() => window.location.href = '/'} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-muted-foreground transition-all">
-        <LogOut className="w-5 h-5" /> Back to Site
+        <LogOut className="w-5 h-5" /> Logout
       </button>
     </div>
   );
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-[#0d0a0d] text-white">
+      {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-72 glass border-r border-white/5 flex-col p-6 space-y-6 sticky top-0 h-screen z-20">
         <NavContent />
       </aside>
+
+      {/* Mobile Top Nav */}
+      <div className="lg:hidden sticky top-0 z-30 w-full glass border-b border-white/5 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold overflow-hidden">
+            {profile.photoUrl ? <img src={profile.photoUrl} alt="avatar" className="w-full h-full object-cover" /> : <User className="w-4 h-4" />}
+          </div>
+          <span className="font-headline font-bold text-sm">Console</span>
+        </div>
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="glass h-10 w-10 rounded-xl">
+              <Menu className="w-6 h-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="bg-[#0d0a0d] border-r border-white/10 p-6 pt-12 text-white">
+            <SheetHeader className="text-left mb-6">
+              <SheetTitle className="text-white font-headline font-bold text-xl uppercase tracking-tighter">Admin Console</SheetTitle>
+            </SheetHeader>
+            <NavContent />
+          </SheetContent>
+        </Sheet>
+      </div>
 
       <main className="flex-1 p-4 sm:p-6 lg:p-10 max-w-6xl mx-auto w-full">
         {!isConfigValid && (
@@ -229,7 +227,7 @@ export default function AdminDashboard() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Firebase Not Connected</AlertTitle>
             <AlertDescription>
-              Environment Variables are missing in Vercel. Changes will not be saved.
+              Environment variables are missing. Please configure them in your Vercel Dashboard and redeploy.
             </AlertDescription>
           </Alert>
         )}
@@ -237,13 +235,12 @@ export default function AdminDashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
           <div>
             <h1 className="text-2xl sm:text-3xl font-headline font-bold uppercase tracking-tight">{activeTab}</h1>
-            <p className="text-sm text-muted-foreground">Manage your portfolio data in the cloud</p>
+            <p className="text-sm text-muted-foreground">Manage your portfolio in real-time</p>
           </div>
           <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
             <Button variant="outline" className="gap-2 glass flex-1 md:flex-none" onClick={() => window.open('/', '_blank')}><Monitor className="w-4 h-4" /> View Site</Button>
-            {activeTab === 'skills' && <Button onClick={() => { setCurrentSkillCat({ id: Date.now().toString(), title: '', items: [] }); setIsSkillModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> Add Category</Button>}
-            {activeTab === 'experience' && <Button onClick={() => { setCurrentExp({ id: Date.now().toString(), company: '', role: '', duration: '', desc: '', type: 'Internal' }); setIsExpModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> Add Experience</Button>}
-            {activeTab === 'projects' && <Button onClick={() => { setCurrentProj({ id: Date.now().toString(), title: '', type: 'Web App', category: 'Side Project', imageUrl: '', techFront: '', techBack: '', techDb: '', link: '', status: 'Active', desc: '' }); setIsProjModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> Add Project</Button>}
+            {activeTab === 'experience' && <Button onClick={() => { setCurrentExp({ id: Date.now().toString(), company: '', role: '', duration: '', desc: '', type: 'Internal' }); setIsExpModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> New Experience</Button>}
+            {activeTab === 'projects' && <Button onClick={() => { setCurrentProj({ id: Date.now().toString(), title: '', type: 'Web App', category: 'Side Project', imageUrl: '', techFront: '', techBack: '', techDb: '', link: '', status: 'Active', desc: '' }); setIsProjModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> New Project</Button>}
           </div>
         </header>
 
@@ -251,9 +248,9 @@ export default function AdminDashboard() {
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="glass border-primary/20"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Projects</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.projects?.length || 0}</CardContent></Card>
-              <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Experiences</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.experiences?.length || 0}</CardContent></Card>
+              <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Experience</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.experiences?.length || 0}</CardContent></Card>
               <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Skills</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.skills?.reduce((acc, cat) => acc + cat.items.length, 0) || 0}</CardContent></Card>
-              <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Certifications</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.certifications?.length || 0}</CardContent></Card>
+              <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Certs</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.certifications?.length || 0}</CardContent></Card>
             </div>
           )}
 
@@ -297,9 +294,9 @@ export default function AdminDashboard() {
                         <div className="space-y-2"><Label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Full Name</Label><Input value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} className="glass h-12" /></div>
                         <div className="space-y-2"><Label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Professional Title</Label><Input value={profile.title} onChange={(e) => setProfile({...profile, title: e.target.value})} className="glass h-12" /></div>
                       </div>
-                      <div className="space-y-2"><Label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Brand/Logo Name</Label><Input value={profile.brandName} onChange={(e) => setProfile({...profile, brandName: e.target.value})} className="glass h-12" /></div>
+                      <div className="space-y-2"><Label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Brand Name</Label><Input value={profile.brandName} onChange={(e) => setProfile({...profile, brandName: e.target.value})} className="glass h-12" /></div>
                       <div className="space-y-2">
-                        <Label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Professional Bio Summary</Label>
+                        <Label className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Professional Bio</Label>
                         <Textarea value={profile.bio} onChange={(e) => setProfile({...profile, bio: e.target.value})} className="glass min-h-[140px] leading-relaxed" />
                       </div>
                     </div>
@@ -307,19 +304,10 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="glass">
-                <CardHeader><CardTitle className="text-lg">Contact Information</CardTitle></CardHeader>
-                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="space-y-2"><Label>Email</Label><Input value={profile.email} onChange={(e) => setProfile({...profile, email: e.target.value})} className="glass" /></div>
-                  <div className="space-y-2"><Label>Phone</Label><Input value={profile.phone} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="glass" /></div>
-                  <div className="space-y-2"><Label>Location</Label><Input value={profile.location} onChange={(e) => setProfile({...profile, location: e.target.value})} className="glass" /></div>
-                </CardContent>
-              </Card>
-
               <div className="flex justify-end sticky bottom-6 z-10">
-                <Button type="submit" disabled={isSaving} className="bg-primary px-10 shadow-2xl h-16 rounded-full text-white font-bold text-lg hover:scale-105 transition-all">
+                <Button type="submit" disabled={isSaving} className="bg-primary text-white px-10 shadow-2xl h-16 rounded-full font-bold text-lg hover:scale-105 transition-all">
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-6 h-6 mr-2" />}
-                  Save All Changes
+                  Save Changes
                 </Button>
               </div>
             </form>
@@ -331,7 +319,7 @@ export default function AdminDashboard() {
                 <Card key={cat.id} className="glass">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Settings className="w-5 h-5 text-primary" />
+                      <Wrench className="w-5 h-5 text-primary" />
                       <Input 
                         value={cat.title} 
                         onChange={(e) => {
@@ -381,15 +369,15 @@ export default function AdminDashboard() {
                 </Card>
               ))}
               <div className="flex justify-end sticky bottom-6 z-10">
-                <Button onClick={() => persistData(profile)} disabled={isSaving} className="bg-primary px-8 shadow-2xl h-14 rounded-full text-white">
+                <Button onClick={() => persistData(profile)} disabled={isSaving} className="bg-primary text-white px-8 shadow-2xl h-14 rounded-full">
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-                  Save Skills to Cloud
+                  Update Skills
                 </Button>
               </div>
             </div>
           )}
 
-          {['education', 'experience', 'projects', 'certifications'].includes(activeTab) && (
+          {['experience', 'projects'].includes(activeTab) && (
             <div className="grid gap-4">
               {activeTab === 'experience' && (profile.experiences || []).map((exp: any) => (
                 <Card key={exp.id} className="glass flex justify-between items-center p-6">
@@ -407,13 +395,16 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Modals for editing items (similar logic for Exp, Proj, etc.) */}
+        {/* Modals */}
         <Dialog open={isExpModalOpen} onOpenChange={setIsExpModalOpen}>
-          <DialogContent className="glass bg-[#161116] text-white">
-            <DialogHeader><DialogTitle>Edit Experience</DialogTitle></DialogHeader>
+          <DialogContent className="glass bg-[#161116] text-white border-white/10">
+            <DialogHeader>
+              <DialogTitle>Edit Experience</DialogTitle>
+            </DialogHeader>
             <div className="space-y-4 py-4">
               <Input value={currentExp?.company || ''} onChange={(e) => setCurrentExp({...currentExp, company: e.target.value})} placeholder="Company" className="glass" />
               <Input value={currentExp?.role || ''} onChange={(e) => setCurrentExp({...currentExp, role: e.target.value})} placeholder="Role" className="glass" />
+              <Input value={currentExp?.duration || ''} onChange={(e) => setCurrentExp({...currentExp, duration: e.target.value})} placeholder="Duration (e.g. 2021 - Present)" className="glass" />
               <Textarea value={currentExp?.desc || ''} onChange={(e) => setCurrentExp({...currentExp, desc: e.target.value})} placeholder="Description" className="glass" />
             </div>
             <DialogFooter><Button onClick={() => handleSaveCollection('experiences', currentExp, setIsExpModalOpen)}>Save</Button></DialogFooter>
@@ -421,11 +412,14 @@ export default function AdminDashboard() {
         </Dialog>
 
         <Dialog open={isProjModalOpen} onOpenChange={setIsProjModalOpen}>
-          <DialogContent className="glass bg-[#161116] text-white">
-            <DialogHeader><DialogTitle>Edit Project</DialogTitle></DialogHeader>
+          <DialogContent className="glass bg-[#161116] text-white border-white/10">
+            <DialogHeader>
+              <DialogTitle>Edit Project</DialogTitle>
+            </DialogHeader>
             <div className="space-y-4 py-4">
-              <Input value={currentProj?.title || ''} onChange={(e) => setCurrentProj({...currentProj, title: e.target.value})} placeholder="Title" className="glass" />
-              <Textarea value={currentProj?.desc || ''} onChange={(e) => setCurrentProj({...currentProj, desc: e.target.value})} placeholder="Description" className="glass" />
+              <Input value={currentProj?.title || ''} onChange={(e) => setCurrentProj({...currentProj, title: e.target.value})} placeholder="Project Title" className="glass" />
+              <Input value={currentProj?.link || ''} onChange={(e) => setCurrentProj({...currentProj, link: e.target.value})} placeholder="Project Link (e.g. https://...)" className="glass" />
+              <Textarea value={currentProj?.desc || ''} onChange={(e) => setCurrentProj({...currentProj, desc: e.target.value})} placeholder="Project Description" className="glass" />
             </div>
             <DialogFooter><Button onClick={() => handleSaveCollection('projects', currentProj, setIsProjModalOpen)}>Save</Button></DialogFooter>
           </DialogContent>
