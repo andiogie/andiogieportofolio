@@ -29,6 +29,61 @@ export function Projects({ initialData }: ProjectsProps) {
   const sideProjects = projects.filter(p => (p as any).category === 'Personal Project' || (p as any).category === 'Side Project' || !(p as any).category);
   const officialProjects = projects.filter(p => (p as any).category === 'Official Project');
 
+  const ProjectDetailDialog = ({ project }: { project: any }) => (
+    <DialogContent className="glass bg-[#161116] border-white/10 text-white max-w-2xl rounded-3xl p-0 overflow-hidden">
+      <div className="relative h-48 w-full">
+        {project.imageUrl ? (
+          <Image src={project.imageUrl} alt={project.title} fill className="object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+            <Building2 className="w-16 h-16 text-primary opacity-20" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#161116] to-transparent" />
+      </div>
+      <div className="p-8 -mt-12 relative z-10">
+        <DialogHeader>
+          <span className="text-[10px] uppercase tracking-widest text-primary font-bold mb-2">{project.type}</span>
+          <DialogTitle className="text-3xl font-headline font-bold">{project.title}</DialogTitle>
+        </DialogHeader>
+        <div className="mt-6 space-y-6 text-left">
+          <p className="text-muted-foreground leading-relaxed text-sm">
+            {project.desc}
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/5">
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase text-white/40 font-bold">Frontend / Interface</p>
+              <p className="text-sm font-medium">{project.techFront || 'N/A'}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase text-white/40 font-bold">Backend / Middleware</p>
+              <p className="text-sm font-medium">{project.techBack || 'N/A'}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase text-white/40 font-bold">Database</p>
+              <p className="text-sm font-medium">{project.techDb || 'N/A'}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase text-white/40 font-bold">Status</p>
+              <p className="text-sm font-medium text-primary">{project.status}</p>
+            </div>
+          </div>
+
+          {project.link && project.link !== '#' && (
+            <div className="pt-4">
+              <Button asChild className="w-full h-12 rounded-xl font-bold gap-2">
+                <a href={project.link} target="_blank">
+                  Visit Project Site <ExternalLink className="w-4 h-4" />
+                </a>
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </DialogContent>
+  );
+
   const PersonalProjectGrid = ({ items }: any) => (
     <div className="mb-20">
       <div className="flex items-center gap-3 mb-10 text-left">
@@ -73,28 +128,26 @@ export function Projects({ initialData }: ProjectsProps) {
                 {project.desc}
               </p>
               
-              <div className="space-y-2 mb-6 mt-auto">
-                {project.techFront && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Layout className="w-3.5 h-3.5 text-primary" />
-                    <span className="truncate">{project.techFront}</span>
-                  </div>
-                )}
-                {project.techBack && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Code2 className="w-3.5 h-3.5 text-primary" />
-                    <span className="truncate">{project.techBack}</span>
-                  </div>
+              <div className="flex flex-col gap-3 mt-auto">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" className="w-full gap-2 text-xs font-bold hover:bg-primary/20 rounded-xl h-10">
+                      View Details <Info className="w-3.5 h-3.5" />
+                    </Button>
+                  </DialogTrigger>
+                  <ProjectDetailDialog project={project} />
+                </Dialog>
+
+                {project.link && project.link !== '#' && (
+                  <a 
+                    href={project.link} 
+                    target="_blank"
+                    className="flex items-center justify-center gap-2 w-full py-3 glass-card rounded-xl hover:bg-primary hover:text-white transition-all font-bold text-sm"
+                  >
+                    Launch <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 )}
               </div>
-
-              <a 
-                href={project.link} 
-                target="_blank"
-                className="flex items-center justify-center gap-2 w-full py-3 glass-card rounded-xl hover:bg-primary hover:text-white transition-all font-bold text-sm"
-              >
-                Launch <ExternalLink className="w-3.5 h-3.5" />
-              </a>
             </div>
           </motion.div>
         ))}
@@ -146,58 +199,7 @@ export function Projects({ initialData }: ProjectsProps) {
                     View Details <Info className="w-3.5 h-3.5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="glass bg-[#161116] border-white/10 text-white max-w-2xl rounded-3xl p-0 overflow-hidden">
-                  <div className="relative h-48 w-full">
-                    {project.imageUrl ? (
-                      <Image src={project.imageUrl} alt={project.title} fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                        <Building2 className="w-16 h-16 text-primary opacity-20" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#161116] to-transparent" />
-                  </div>
-                  <div className="p-8 -mt-12 relative z-10">
-                    <DialogHeader>
-                      <span className="text-[10px] uppercase tracking-widest text-primary font-bold mb-2">{project.type}</span>
-                      <DialogTitle className="text-3xl font-headline font-bold">{project.title}</DialogTitle>
-                    </DialogHeader>
-                    <div className="mt-6 space-y-6 text-left">
-                      <p className="text-muted-foreground leading-relaxed text-sm">
-                        {project.desc}
-                      </p>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                        <div className="space-y-1">
-                          <p className="text-[10px] uppercase text-white/40 font-bold">Frontend / Interface</p>
-                          <p className="text-sm font-medium">{project.techFront || 'N/A'}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] uppercase text-white/40 font-bold">Backend / Middleware</p>
-                          <p className="text-sm font-medium">{project.techBack || 'N/A'}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] uppercase text-white/40 font-bold">Database</p>
-                          <p className="text-sm font-medium">{project.techDb || 'N/A'}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] uppercase text-white/40 font-bold">Status</p>
-                          <p className="text-sm font-medium text-primary">{project.status}</p>
-                        </div>
-                      </div>
-
-                      {project.link && project.link !== '#' && (
-                        <div className="pt-4">
-                          <Button asChild className="w-full h-12 rounded-xl font-bold gap-2">
-                            <a href={project.link} target="_blank">
-                              Visit Project Site <ExternalLink className="w-4 h-4" />
-                            </a>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </DialogContent>
+                <ProjectDetailDialog project={project} />
               </Dialog>
               
               {project.link && project.link !== '#' && (
