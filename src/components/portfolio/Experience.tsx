@@ -45,7 +45,7 @@ export function Experience({ initialData }: ExperienceProps) {
                 <div>
                   <h4 className="text-2xl font-headline font-bold text-white">{exp.role}</h4>
                   <p className="text-primary font-medium flex items-center gap-2">
-                    {exp.company} <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">{exp.type}</span>
+                    {exp.company}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium bg-white/5 px-4 py-2 rounded-full">
