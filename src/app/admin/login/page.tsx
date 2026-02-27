@@ -64,7 +64,7 @@ export default function LoginPage() {
                 type="email"
                 required
                 disabled={isPending}
-                placeholder="admin@devogie.com"
+                // placeholder="admin@devogie.com"
                 className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-primary transition-all text-sm disabled:opacity-50"
               />
             </div>
@@ -79,7 +79,7 @@ export default function LoginPage() {
                 type="password"
                 required
                 disabled={isPending}
-                placeholder="••••••••"
+                // placeholder="••••••••"
                 className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-primary transition-all text-sm disabled:opacity-50"
               />
             </div>
