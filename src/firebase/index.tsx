@@ -14,7 +14,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-const isConfigValid = firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.includes('REPLACE');
+// Check if all required config values are present and not placeholders
+export const isConfigValid = !!(
+  firebaseConfig.apiKey && 
+  firebaseConfig.projectId && 
+  !firebaseConfig.apiKey.includes('REPLACE') &&
+  firebaseConfig.apiKey !== 'dummy'
+);
 
 const app = getApps().length > 0 
   ? getApp() 
