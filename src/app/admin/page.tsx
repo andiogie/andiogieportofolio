@@ -505,7 +505,7 @@ export default function AdminDashboard() {
 
         {/* Modals */}
         <Dialog open={isExpModalOpen} onOpenChange={setIsExpModalOpen}>
-          <DialogContent className="glass bg-[#161116] text-white border-white/10 max-w-2xl">
+          <DialogContent className="glass bg-[#161116] text-white border-white/10 max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Experience</DialogTitle>
             </DialogHeader>
@@ -533,7 +533,7 @@ export default function AdminDashboard() {
         </Dialog>
 
         <Dialog open={isProjModalOpen} onOpenChange={setIsProjModalOpen}>
-          <DialogContent className="glass bg-[#161116] text-white border-white/10 max-w-2xl">
+          <DialogContent className="glass bg-[#161116] text-white border-white/10 max-w-2xl w-[95vw] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Edit Project</DialogTitle>
             </DialogHeader>
@@ -611,12 +611,14 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-            <DialogFooter><Button onClick={() => handleSaveCollection('projects', currentProj, setIsProjModalOpen)}>Save Project</Button></DialogFooter>
+            <DialogFooter className="sticky bottom-0 bg-[#161116] pt-2">
+              <Button onClick={() => handleSaveCollection('projects', currentProj, setIsProjModalOpen)} className="w-full sm:w-auto">Save Project</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <Dialog open={isCertModalOpen} onOpenChange={setIsCertModalOpen}>
-          <DialogContent className="glass bg-[#161116] text-white border-white/10">
+          <DialogContent className="glass bg-[#161116] text-white border-white/10 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Certificate</DialogTitle>
             </DialogHeader>
