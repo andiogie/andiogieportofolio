@@ -246,7 +246,7 @@ export default function AdminDashboard() {
       <div className="flex-1" />
 
       <div className="px-4 mb-6 mt-auto">
-        <Button variant="ghost" size="sm" className="w-full glass gap-2" onClick={() => window.open('/', '_blank')}>
+        <Button variant="ghost" size="sm" className="glass gap-2" onClick={() => window.open('/', '_blank')}>
           <Monitor className="w-4 h-4" /> Live Site
         </Button>
       </div>
@@ -615,6 +615,21 @@ export default function AdminDashboard() {
                         <Input value={currentProj?.status || ''} onChange={(e) => setCurrentProj({...currentProj, status: e.target.value})} placeholder="e.g. Completed" className="glass" />
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5 text-left">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Frontend Tech</Label>
+                    <Input value={currentProj?.techFront || ''} onChange={(e) => setCurrentProj({...currentProj, techFront: e.target.value})} placeholder="e.g. React" className="glass" />
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Backend Tech</Label>
+                    <Input value={currentProj?.techBack || ''} onChange={(e) => setCurrentProj({...currentProj, techBack: e.target.value})} placeholder="e.g. Node.js" className="glass" />
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Database</Label>
+                    <Input value={currentProj?.techDb || ''} onChange={(e) => setCurrentProj({...currentProj, techDb: e.target.value})} placeholder="e.g. PostgreSQL" className="glass" />
                   </div>
                 </div>
 
