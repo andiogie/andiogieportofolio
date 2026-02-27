@@ -38,7 +38,8 @@ import {
   Instagram,
   Facebook,
   Music2,
-  Layers
+  Layers,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -499,7 +500,13 @@ export default function AdminDashboard() {
               ))}
               {activeTab === 'projects' && (profile.projects || []).map((proj: any) => (
                 <Card key={proj.id} className="glass flex justify-between items-center p-6">
-                  <div><h4 className="font-bold text-left">{proj.title}</h4><p className="text-xs text-muted-foreground text-left">{proj.category} • {proj.status}</p></div>
+                  <div>
+                    <h4 className="font-bold text-left">{proj.title}</h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      <p className="text-xs text-muted-foreground text-left">{proj.category} • {proj.status}</p>
+                      {proj.techDb && <span className="text-[10px] text-primary font-bold flex items-center gap-1"><Database className="w-3 h-3" /> {proj.techDb}</span>}
+                    </div>
+                  </div>
                   <div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setCurrentProj(proj); setIsProjModalOpen(true); }} className="text-primary hover:bg-primary/10"><Edit className="w-4 h-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleDeleteItem('projects', proj.id)} className="text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></Button></div>
                 </Card>
               ))}
