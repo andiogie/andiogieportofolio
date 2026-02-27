@@ -81,6 +81,8 @@ export default function AdminDashboard() {
   const [currentProj, setCurrentProj] = useState<any>(null);
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [currentCert, setCurrentCert] = useState<any>(null);
+  const [isEduModalOpen, setIsEduModalOpen] = useState(false);
+  const [currentEdu, setCurrentEdu] = useState<any>(null);
 
   const [profile, setProfile] = useState(PROFILE_DATA);
 
@@ -299,12 +301,13 @@ export default function AdminDashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
           <div>
             <h1 className="text-2xl sm:text-3xl font-headline font-bold uppercase tracking-tight">
-              {activeTab === 'certifications' ? 'Certificates' : activeTab}
+              {TABS.find(t => t.id === activeTab)?.label}
             </h1>
             <p className="text-sm text-muted-foreground">Manage your portfolio in real-time</p>
           </div>
           <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
             <Button variant="outline" className="gap-2 glass flex-1 md:flex-none" onClick={() => window.open('/', '_blank')}><Monitor className="w-4 h-4" /> View Site</Button>
+            {activeTab === 'education' && <Button onClick={() => { setCurrentEdu({ id: Date.now().toString(), institution: '', degree: '', duration: '', location: '' }); setIsEduModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> New Education</Button>}
             {activeTab === 'experience' && <Button onClick={() => { setCurrentExp({ id: Date.now().toString(), company: '', role: '', duration: '', desc: '', type: 'Internal' }); setIsExpModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> New Experience</Button>}
             {activeTab === 'projects' && <Button onClick={() => { setCurrentProj({ id: Date.now().toString(), title: '', type: 'Web App', category: 'Personal Project', imageUrl: '', techFront: '', techBack: '', techDb: '', link: '', status: 'Active', desc: '' }); setIsProjModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> New Project</Button>}
             {activeTab === 'certifications' && <Button onClick={() => { setCurrentCert({ id: Date.now().toString(), name: '', issuer: '', year: new Date().getFullYear().toString(), color: 'from-primary/10 to-accent/10', pdfUrl: '#' }); setIsCertModalOpen(true); }} className="gap-2 flex-1 md:flex-none"><Plus className="w-4 h-4" /> New Certificate</Button>}
@@ -316,7 +319,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="glass border-primary/20"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Projects</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.projects?.length || 0}</CardContent></Card>
               <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Experience</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.experiences?.length || 0}</CardContent></Card>
-              <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Skills</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.skills?.reduce((acc, cat) => acc + (cat.items?.length || 0), 0) || 0}</CardContent></Card>
+              <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Education</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.education?.length || 0}</CardContent></Card>
               <Card className="glass"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Certificates</CardTitle></CardHeader><CardContent className="text-3xl font-headline font-bold">{profile.certifications?.length || 0}</CardContent></Card>
             </div>
           )}
@@ -450,7 +453,7 @@ export default function AdminDashboard() {
                             className="glass h-8 text-sm"
                           />
                         </div>
-                        <div className="flex-[2] w-full md:w-auto space-y-2">
+                        <div className="flex-[2] w-full md:w-auto flex items-center gap-4">
                           <Slider value={[skill.level]} max={100} step={1} onValueChange={(vals) => {
                              const updated = profile.skills.map(c => c.id === cat.id ? { ...c, items: c.items.map(s => s.id === skill.id ? { ...s, level: vals[0] } : s) } : c);
                              setProfile({ ...profile, skills: updated });
@@ -480,8 +483,14 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {['experience', 'projects', 'certifications'].includes(activeTab) && (
+          {['experience', 'education', 'projects', 'certifications'].includes(activeTab) && (
             <div className="grid gap-4">
+              {activeTab === 'education' && (profile.education || []).map((edu: any) => (
+                <Card key={edu.id} className="glass flex justify-between items-center p-6">
+                  <div><h4 className="font-bold">{edu.institution}</h4><p className="text-xs text-muted-foreground">{edu.degree} • {edu.duration}</p></div>
+                  <div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setCurrentEdu(edu); setIsEduModalOpen(true); }} className="text-primary hover:bg-primary/10"><Edit className="w-4 h-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleDeleteItem('education', edu.id)} className="text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></Button></div>
+                </Card>
+              ))}
               {activeTab === 'experience' && (profile.experiences || []).map((exp: any) => (
                 <Card key={exp.id} className="glass flex justify-between items-center p-6">
                   <div><h4 className="font-bold">{exp.role} at {exp.company}</h4><p className="text-xs text-muted-foreground">{exp.duration}</p></div>
@@ -490,7 +499,7 @@ export default function AdminDashboard() {
               ))}
               {activeTab === 'projects' && (profile.projects || []).map((proj: any) => (
                 <Card key={proj.id} className="glass flex justify-between items-center p-6">
-                  <div><h4 className="font-bold">{proj.title}</h4><p className="text-xs text-muted-foreground">{proj.category} • {proj.status}</p></div>
+                  <div><h4 className="font-bold text-left">{proj.title}</h4><p className="text-xs text-muted-foreground text-left">{proj.category} • {proj.status}</p></div>
                   <div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setCurrentProj(proj); setIsProjModalOpen(true); }} className="text-primary hover:bg-primary/10"><Edit className="w-4 h-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleDeleteItem('projects', proj.id)} className="text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></Button></div>
                 </Card>
               ))}
@@ -505,6 +514,23 @@ export default function AdminDashboard() {
         </div>
 
         {/* Modals */}
+        <Dialog open={isEduModalOpen} onOpenChange={setIsEduModalOpen}>
+          <DialogContent className="glass bg-[#161116] text-white border-white/10 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Education</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-1.5"><Label className="text-xs font-bold text-muted-foreground">Institution</Label><Input value={currentEdu?.institution || ''} onChange={(e) => setCurrentEdu({...currentEdu, institution: e.target.value})} placeholder="e.g. Gunadarma University" className="glass" /></div>
+              <div className="space-y-1.5"><Label className="text-xs font-bold text-muted-foreground">Degree</Label><Input value={currentEdu?.degree || ''} onChange={(e) => setCurrentEdu({...currentEdu, degree: e.target.value})} placeholder="e.g. Bachelor of IT" className="glass" /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5"><Label className="text-xs font-bold text-muted-foreground">Duration</Label><Input value={currentEdu?.duration || ''} onChange={(e) => setCurrentEdu({...currentEdu, duration: e.target.value})} placeholder="e.g. 2015 - 2019" className="glass" /></div>
+                <div className="space-y-1.5"><Label className="text-xs font-bold text-muted-foreground">Location</Label><Input value={currentEdu?.location || ''} onChange={(e) => setCurrentEdu({...currentEdu, location: e.target.value})} placeholder="e.g. Depok, Indonesia" className="glass" /></div>
+              </div>
+            </div>
+            <DialogFooter><Button onClick={() => handleSaveCollection('education', currentEdu, setIsEduModalOpen)}>Save Education</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={isExpModalOpen} onOpenChange={setIsExpModalOpen}>
           <DialogContent className="glass bg-[#161116] text-white border-white/10 max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -534,7 +560,7 @@ export default function AdminDashboard() {
         </Dialog>
 
         <Dialog open={isProjModalOpen} onOpenChange={setIsProjModalOpen}>
-          <DialogContent className="glass bg-[#161116] text-white border-white/10 max-w-2xl w-[95vw] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogContent className="glass bg-[#161116] text-white border-white/10 max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Edit Project</DialogTitle>
             </DialogHeader>
@@ -559,11 +585,11 @@ export default function AdminDashboard() {
 
                   <div className="flex-1 w-full space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 text-left">
                         <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Title</Label>
                         <Input value={currentProj?.title || ''} onChange={(e) => setCurrentProj({...currentProj, title: e.target.value})} placeholder="Project Title" className="glass" />
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 text-left">
                         <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Category</Label>
                         <Select 
                           value={currentProj?.category || 'Personal Project'} 
@@ -580,11 +606,11 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 text-left">
                         <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Type</Label>
                         <Input value={currentProj?.type || ''} onChange={(e) => setCurrentProj({...currentProj, type: e.target.value})} placeholder="e.g. Web App" className="glass" />
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 text-left">
                         <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Status</Label>
                         <Input value={currentProj?.status || ''} onChange={(e) => setCurrentProj({...currentProj, status: e.target.value})} placeholder="e.g. Completed" className="glass" />
                       </div>
@@ -593,11 +619,11 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 text-left">
                     <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Project Link</Label>
                     <Input value={currentProj?.link || ''} onChange={(e) => setCurrentProj({...currentProj, link: e.target.value})} placeholder="https://..." className="glass" />
                   </div>
-                  <div className="relative space-y-1.5">
+                  <div className="relative space-y-1.5 text-left">
                     <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Description</Label>
                     <Textarea value={currentProj?.desc || ''} onChange={(e) => setCurrentProj({...currentProj, desc: e.target.value})} placeholder="Describe the project..." className="glass min-h-[120px]" />
                     <Button 
@@ -623,7 +649,7 @@ export default function AdminDashboard() {
             <DialogHeader>
               <DialogTitle>Edit Certificate</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 text-left">
               <div className="space-y-1.5">
                 <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Certificate Name</Label>
                 <Input value={currentCert?.name || ''} onChange={(e) => setCurrentCert({...currentCert, name: e.target.value})} placeholder="e.g. AWS Certified Developer" className="glass" />
@@ -653,6 +679,7 @@ const TABS = [
   { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
   { id: 'profile', icon: User, label: 'Profile' },
   { id: 'skills', icon: Wrench, label: 'Skills' },
+  { id: 'education', icon: GraduationCap, label: 'Education' },
   { id: 'experience', icon: Briefcase, label: 'Experience' },
   { id: 'projects', icon: Code, label: 'Projects' },
   { id: 'certifications', icon: Award, label: 'Certificates' }
