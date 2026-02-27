@@ -454,7 +454,8 @@ export default function AdminDashboard() {
                           <Slider value={[skill.level]} max={100} step={1} onValueChange={(vals) => {
                              const updated = profile.skills.map(c => c.id === cat.id ? { ...c, items: c.items.map(s => s.id === skill.id ? { ...s, level: vals[0] } : s) } : c);
                              setProfile({ ...profile, skills: updated });
-                          }} className="py-2" />
+                          }} className="flex-1" />
+                          <span className="text-xs font-bold text-primary w-10 text-right">{skill.level}%</span>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => {
                            const updated = profile.skills.map(c => c.id === cat.id ? { ...c, items: c.items.filter(s => s.id !== skill.id) } : c);
